@@ -210,6 +210,11 @@ const app = document.getElementById("app");
 const toc = document.getElementById("toc");
 const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
+// Chave ESTÁVEL por conteúdo (não por índice): reordenar/adicionar/remover itens
+// não desloca mais as marcações salvas. Muda só se método/path/texto do item mudar.
+function hash(str) { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0; return h.toString(36); }
+function itemKey(sec, it) { return sec.id + ":" + hash((it.m || "") + "|" + (it.p || "") + "|" + it.t); }
+
 DATA.forEach(sec => {
   const total = sec.items.length;
   const a = document.createElement("a");
@@ -229,7 +234,7 @@ DATA.forEach(sec => {
     <ul class="items"></ul>`;
   const ul = s.querySelector("ul");
   sec.items.forEach((it, i) => {
-    const key = sec.id + ":" + i;
+    const key = itemKey(sec, it);
     const rec = state[key] || {};
     const li = document.createElement("li");
     li.className = "item" + (it.m ? "" : " no-method") + (rec.s ? " " + rec.s : "");
@@ -284,8 +289,8 @@ function refresh() {
   let gOk = 0, gFail = 0, gTot = 0;
   DATA.forEach(sec => {
     let ok = 0, fail = 0;
-    sec.items.forEach((_, i) => {
-      const r = state[sec.id + ":" + i];
+    sec.items.forEach(it => {
+      const r = state[itemKey(sec, it)];
       if (r && r.s === "pass") ok++; else if (r && r.s === "fail") fail++;
     });
     const tot = sec.items.length; gOk += ok; gFail += fail; gTot += tot;
@@ -315,8 +320,8 @@ function buildMarkdown() {
   const fails = [];
   DATA.forEach(sec => {
     const rows = [];
-    sec.items.forEach((it, i) => {
-      const r = state[sec.id + ":" + i];
+    sec.items.forEach(it => {
+      const r = state[itemKey(sec, it)];
       if (r && r.s === "fail") rows.push({ it, note: (r.n || "").trim() });
     });
     if (rows.length) fails.push({ sec, rows });
