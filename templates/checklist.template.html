@@ -1,0 +1,388 @@
+<title>{{PROJECT_NAME}} — Checklist de QA da Plataforma</title>
+<!--
+  ============================================================================
+  TEMPLATE — qa-md-gen
+  ----------------------------------------------------------------------------
+  Placeholders que o gerador DEVE substituir:
+    {{PROJECT_NAME}}  → nome de exibição do projeto (ex.: "Auropost")
+    {{PROJECT_SLUG}}  → slug kebab-case p/ localStorage e nome de arquivo (ex.: "auropost")
+    {{DATA}}          → array JS de domínios/itens (ver forma no bloco DATA abaixo)
+  Nada mais precisa mudar: CSS, lógica de estado, export .md e temas são genéricos.
+  ============================================================================
+-->
+<style>
+  :root {
+    --bg: #f5f7f8; --surface: #ffffff; --surface-2: #eef2f3; --border: #d9e0e2;
+    --border-strong: #c2cccf; --ink: #16232a; --ink-soft: #48585f; --ink-faint: #7c8a90;
+    --accent: #0f9b8e; --accent-soft: #d3efeb; --accent-ink: #0a6f66;
+    --pass: #2e9e5b; --pass-soft: #dcf1e4; --warn: #c9821a; --warn-soft: #f6ebd6;
+    --crit: #d0473f; --crit-soft: #f6dedb;
+    --get: #2b74c4; --post: #2e9e5b; --patch: #c9821a; --put: #8a5bc4; --delete: #d0473f;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --shadow: 0 1px 2px rgba(20,35,42,.05), 0 4px 16px rgba(20,35,42,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d151a; --surface: #141f26; --surface-2: #1b2830; --border: #263740;
+      --border-strong: #344b56; --ink: #e7edef; --ink-soft: #a4b4bb; --ink-faint: #6f8189;
+      --accent: #29c2b2; --accent-soft: #123a37; --accent-ink: #6fe0d3;
+      --pass: #4ec27b; --pass-soft: #10331f; --warn: #e0a94b; --warn-soft: #3a2c10;
+      --crit: #ef6a61; --crit-soft: #3a1613; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f7f8; --surface: #ffffff; --surface-2: #eef2f3; --border: #d9e0e2;
+    --border-strong: #c2cccf; --ink: #16232a; --ink-soft: #48585f; --ink-faint: #7c8a90;
+    --accent: #0f9b8e; --accent-soft: #d3efeb; --accent-ink: #0a6f66;
+    --pass: #2e9e5b; --pass-soft: #dcf1e4; --warn: #c9821a; --warn-soft: #f6ebd6;
+    --crit: #d0473f; --crit-soft: #f6dedb; --shadow: 0 1px 2px rgba(20,35,42,.05), 0 4px 16px rgba(20,35,42,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d151a; --surface: #141f26; --surface-2: #1b2830; --border: #263740;
+    --border-strong: #344b56; --ink: #e7edef; --ink-soft: #a4b4bb; --ink-faint: #6f8189;
+    --accent: #29c2b2; --accent-soft: #123a37; --accent-ink: #6fe0d3;
+    --pass: #4ec27b; --pass-soft: #10331f; --warn: #e0a94b; --warn-soft: #3a2c10;
+    --crit: #ef6a61; --crit-soft: #3a1613; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.3);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 32px 20px 96px; }
+
+  header.masthead { position: relative; border: 1px solid var(--border); background: var(--surface); border-radius: 16px; padding: 26px 28px; box-shadow: var(--shadow); overflow: hidden; }
+  header.masthead::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, var(--accent), transparent 70%); }
+  .eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent-ink); font-weight: 600; }
+  h1 { font-size: clamp(26px, 4vw, 34px); line-height: 1.1; margin: 8px 0 6px; letter-spacing: -.02em; text-wrap: balance; }
+  .sub { color: var(--ink-soft); max-width: 64ch; margin: 0; font-size: 15px; }
+
+  .topbar { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; margin-top: 22px; }
+  .gauge { display: flex; align-items: center; gap: 16px; }
+  .ring { width: 68px; height: 68px; border-radius: 50%; flex: none; position: relative; background: var(--surface-2); display: grid; place-items: center; }
+  .ring::after { content: ""; width: 52px; height: 52px; border-radius: 50%; background: var(--surface); position: absolute; }
+  .ring b { position: relative; z-index: 1; font-family: var(--mono); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .tallies { display: flex; gap: 14px; font-size: 13px; }
+  .tally { display: flex; flex-direction: column; }
+  .tally b { font-family: var(--mono); font-size: 17px; font-variant-numeric: tabular-nums; }
+  .tally span { color: var(--ink-faint); font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; }
+  .tally.ok b { color: var(--pass); } .tally.fail b { color: var(--crit); } .tally.pend b { color: var(--ink-soft); }
+
+  .controls { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; align-items: flex-start; }
+  button.ctl { font-family: var(--sans); font-size: 13px; color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--border); padding: 7px 12px; border-radius: 8px; cursor: pointer; transition: .15s; }
+  button.ctl:hover { border-color: var(--border-strong); color: var(--ink); }
+  button.ctl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.ctl.primary { background: var(--crit); border-color: var(--crit); color: #fff; font-weight: 600; }
+  button.ctl.primary:hover { filter: brightness(1.06); color: #fff; }
+  button.ctl.primary[disabled] { background: var(--surface-2); border-color: var(--border); color: var(--ink-faint); cursor: not-allowed; filter: none; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--ink-soft); }
+  .legend .m { display: inline-flex; align-items: center; gap: 6px; }
+  .sev { display: inline-block; width: 9px; height: 9px; border-radius: 2px; }
+
+  nav.toc { margin: 26px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+  nav.toc a { display: flex; justify-content: space-between; gap: 8px; align-items: center; text-decoration: none; color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; transition: .15s; }
+  nav.toc a:hover { border-color: var(--accent); color: var(--ink); }
+  nav.toc a .cnt { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  nav.toc a .cnt.hasfail { color: var(--crit); font-weight: 700; }
+
+  section.dom { margin-top: 30px; scroll-margin-top: 16px; }
+  .dom-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .dom-head h2 { font-size: 19px; margin: 0; letter-spacing: -.01em; }
+  .dom-head .tag { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .1em; }
+  .dom-head .dom-cnt { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .dom-desc { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 12px; }
+  .pbar { height: 6px; border-radius: 4px; background: var(--surface-2); overflow: hidden; margin-bottom: 14px; display: flex; }
+  .pbar > i { display: block; height: 100%; width: 0; transition: width .35s ease; }
+  .pbar > i.ok { background: var(--pass); } .pbar > i.bad { background: var(--crit); }
+
+  ul.items { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
+  li.item { display: grid; grid-template-columns: 62px 64px 1fr; gap: 12px; align-items: start; padding: 12px 16px; border-top: 1px solid var(--border); transition: background .12s; }
+  li.item:first-child { border-top: none; }
+  li.item.no-method { grid-template-columns: 62px 1fr; }
+  li.item.pass { background: color-mix(in srgb, var(--pass-soft) 45%, transparent); }
+  li.item.fail { background: color-mix(in srgb, var(--crit-soft) 45%, transparent); }
+  li.item.pass .lead { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--border-strong); }
+
+  .status { display: flex; gap: 5px; margin-top: 1px; }
+  .st { width: 27px; height: 27px; border-radius: 7px; border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--ink-faint); font-size: 14px; line-height: 1; cursor: pointer; display: grid; place-items: center; transition: .13s; padding: 0; }
+  .st:hover { border-color: var(--ink-soft); color: var(--ink); }
+  .st:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  li.item.pass .st.ok { background: var(--pass); border-color: var(--pass); color: #fff; }
+  li.item.fail .st.no { background: var(--crit); border-color: var(--crit); color: #fff; }
+
+  .method { font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-align: center; padding: 3px 0; border-radius: 5px; color: #fff; align-self: start; margin-top: 3px; }
+  .method.GET { background: var(--get); } .method.POST { background: var(--post); }
+  .method.PATCH { background: var(--patch); } .method.PUT { background: var(--put); }
+  .method.DELETE { background: var(--delete); } .method.FLOW { background: var(--ink-faint); }
+  .txt { font-size: 14px; padding-top: 2px; }
+  .txt .path { font-family: var(--mono); font-size: 12px; color: var(--accent-ink); background: var(--accent-soft); padding: 1px 6px; border-radius: 4px; word-break: break-all; }
+  .txt .sevtag { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 1px 5px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+  .sevtag.crit { background: var(--crit-soft); color: var(--crit); }
+
+  .failbox { margin-top: 10px; }
+  .failbox label { display: block; font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--crit); font-weight: 600; margin-bottom: 5px; }
+  .failbox textarea { width: 100%; min-height: 62px; resize: vertical; font-family: var(--sans); font-size: 13.5px; color: var(--ink); background: var(--surface); border: 1.5px solid var(--crit); border-radius: 8px; padding: 9px 11px; line-height: 1.45; }
+  .failbox textarea::placeholder { color: var(--ink-faint); }
+  .failbox textarea:focus-visible { outline: 2px solid var(--crit); outline-offset: 1px; }
+
+  footer { margin-top: 40px; text-align: center; color: var(--ink-faint); font-size: 12.5px; line-height: 1.7; }
+  footer code { font-size: 11.5px; }
+  body.only-pending li.item.pass { display: none; }
+
+  #toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg); font-size: 13.5px; padding: 11px 18px; border-radius: 10px; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: .25s; z-index: 50; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 560px) {
+    li.item { grid-template-columns: 62px 56px 1fr; gap: 9px; padding: 11px 12px; }
+    .controls { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">{{PROJECT_NAME}} · Garantia de Qualidade · Checklist vivo</div>
+    <h1>Checklist de QA da Plataforma</h1>
+    <p class="sub">Roteiro de verificação ponta a ponta — cada endpoint, worker e fluxo de usuário. Marque <b>✓ Passou</b> ou <b>✗ Falhou</b>; ao falhar, descreva o erro. Depois, exporte um prompt <code>.md</code> pronto de correção. Progresso salvo neste navegador.</p>
+
+    <div class="topbar">
+      <div class="gauge">
+        <div class="ring" id="ring"><b id="ringPct">0%</b></div>
+        <div class="tallies">
+          <div class="tally ok"><b id="tOk">0</b><span>Passou</span></div>
+          <div class="tally fail"><b id="tFail">0</b><span>Falhou</span></div>
+          <div class="tally pend"><b id="tPend">0</b><span>Pendente</span></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="ctl primary" id="exportBtn" disabled>Exportar erros (.md)</button>
+        <button class="ctl" id="copyBtn" disabled>Copiar prompt</button>
+        <button class="ctl" id="toggleDone">Só pendências</button>
+        <button class="ctl" id="resetAll">Limpar tudo</button>
+        <button class="ctl" id="themeBtn">Tema</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="m"><span class="sev" style="background:var(--get)"></span>GET</span>
+      <span class="m"><span class="sev" style="background:var(--post)"></span>POST</span>
+      <span class="m"><span class="sev" style="background:var(--patch)"></span>PATCH</span>
+      <span class="m"><span class="sev" style="background:var(--put)"></span>PUT</span>
+      <span class="m"><span class="sev" style="background:var(--delete)"></span>DELETE</span>
+      <span class="m"><span class="sev" style="background:var(--ink-faint)"></span>FLOW / cenário</span>
+      <span class="m"><span class="sevtag crit">crit</span> risco alto p/ cliente</span>
+    </div>
+
+    <nav class="toc" id="toc"></nav>
+  </header>
+
+  <main id="app"></main>
+
+  <footer>
+    Checklist vivo — sempre que um endpoint ou funcionalidade nascer, adicione um item ao array <code>DATA</code> deste arquivo.<br>
+    Gerado por <code>qa-md-gen</code> · versão navegável: abra este HTML no browser.
+  </footer>
+</div>
+<div id="toast"></div>
+
+<script>
+// ────────────────────────────────────────────────────────────────────────────
+// DATA — o gerador substitui {{DATA}} por um array de domínios.
+// Forma de cada domínio:
+//   { id:"kebab-unico", title:"Título visível", tag:"rótulo-curto",
+//     desc:"1 linha sobre o domínio",
+//     items:[
+//       // endpoint HTTP:
+//       { m:"POST", p:"/rota/{id}", t:"cenário de teste concreto", sev:"crit" },
+//       // worker/cron/fluxo sem rota HTTP:
+//       { m:"FLOW", t:"cenário assíncrono ou de UI" },
+//     ] }
+//   m ∈ GET|POST|PATCH|PUT|DELETE|FLOW · p opcional (só em HTTP) · sev:"crit" opcional
+// ────────────────────────────────────────────────────────────────────────────
+const DATA = {{DATA}};
+
+const STORAGE_KEY = "{{PROJECT_SLUG}}-qa-v2";
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { return {}; } },
+  set(v) { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); }
+};
+let state = store.get();
+const app = document.getElementById("app");
+const toc = document.getElementById("toc");
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+DATA.forEach(sec => {
+  const total = sec.items.length;
+  const a = document.createElement("a");
+  a.href = "#" + sec.id;
+  a.innerHTML = `<span>${sec.title}</span><span class="cnt" data-toc="${sec.id}">0/${total}</span>`;
+  toc.appendChild(a);
+
+  const s = document.createElement("section");
+  s.className = "dom"; s.id = sec.id;
+  s.innerHTML = `
+    <div class="dom-head">
+      <h2>${sec.title}</h2><span class="tag">${sec.tag}</span>
+      <span class="dom-cnt" data-cnt="${sec.id}">0 / ${total}</span>
+    </div>
+    <p class="dom-desc">${sec.desc}</p>
+    <div class="pbar"><i class="ok" data-bar-ok="${sec.id}"></i><i class="bad" data-bar-bad="${sec.id}"></i></div>
+    <ul class="items"></ul>`;
+  const ul = s.querySelector("ul");
+  sec.items.forEach((it, i) => {
+    const key = sec.id + ":" + i;
+    const rec = state[key] || {};
+    const li = document.createElement("li");
+    li.className = "item" + (it.m ? "" : " no-method") + (rec.s ? " " + rec.s : "");
+    li.dataset.key = key;
+    const sevtag = it.sev ? `<span class="sevtag ${it.sev}">${it.sev}</span>` : "";
+    const pathHtml = it.p ? ` <span class="path">${it.p}</span>` : "";
+    const methodHtml = it.m ? `<span class="method ${it.m}">${it.m}</span>` : "";
+    const failHtml = `<div class="failbox" data-fail="${key}" ${rec.s === "fail" ? "" : "hidden"}>
+        <label>O que deu errado?</label>
+        <textarea data-note="${key}" placeholder="Descreva o comportamento observado, passos para reproduzir, mensagem de erro…">${esc(rec.n || "")}</textarea>
+      </div>`;
+    li.innerHTML = `
+      <div class="status">
+        <button class="st ok" data-act="pass" data-key="${key}" title="Passou" aria-label="marcar como passou">✓</button>
+        <button class="st no" data-act="fail" data-key="${key}" title="Falhou" aria-label="marcar como falhou">✗</button>
+      </div>
+      ${methodHtml}
+      <div class="txt"><span class="lead">${it.t}</span>${pathHtml}${sevtag}${failHtml}</div>`;
+    ul.appendChild(li);
+  });
+  app.appendChild(s);
+});
+
+function setStatus(key, status) {
+  const rec = state[key] || {};
+  if (rec.s === status) { delete state[key]; }
+  else { rec.s = status; state[key] = rec; }
+  const li = document.querySelector(`li[data-key="${key}"]`);
+  const cur = state[key] && state[key].s;
+  li.classList.toggle("pass", cur === "pass");
+  li.classList.toggle("fail", cur === "fail");
+  const box = document.querySelector(`[data-fail="${key}"]`);
+  box.hidden = cur !== "fail";
+  if (cur === "fail") box.querySelector("textarea").focus();
+  store.set(state); refresh();
+}
+
+app.addEventListener("click", e => {
+  const btn = e.target.closest(".st");
+  if (!btn) return;
+  setStatus(btn.dataset.key, btn.dataset.act);
+});
+app.addEventListener("input", e => {
+  if (!e.target.matches("[data-note]")) return;
+  const key = e.target.dataset.note;
+  const rec = state[key] || { s: "fail" };
+  rec.n = e.target.value;
+  state[key] = rec; store.set(state);
+});
+
+function refresh() {
+  let gOk = 0, gFail = 0, gTot = 0;
+  DATA.forEach(sec => {
+    let ok = 0, fail = 0;
+    sec.items.forEach((_, i) => {
+      const r = state[sec.id + ":" + i];
+      if (r && r.s === "pass") ok++; else if (r && r.s === "fail") fail++;
+    });
+    const tot = sec.items.length; gOk += ok; gFail += fail; gTot += tot;
+    document.querySelector(`[data-bar-ok="${sec.id}"]`).style.width = (ok / tot * 100) + "%";
+    document.querySelector(`[data-bar-bad="${sec.id}"]`).style.width = (fail / tot * 100) + "%";
+    document.querySelector(`[data-cnt="${sec.id}"]`).textContent = `${ok+fail} / ${tot}`;
+    const tc = document.querySelector(`[data-toc="${sec.id}"]`);
+    tc.textContent = fail ? `${fail} ✗` : `${ok}/${tot}`;
+    tc.classList.toggle("hasfail", fail > 0);
+  });
+  const tested = gOk + gFail;
+  const okPct = gTot ? gOk / gTot * 100 : 0;
+  const failPct = gTot ? gFail / gTot * 100 : 0;
+  document.getElementById("ring").style.background =
+    `conic-gradient(var(--pass) 0 ${okPct}%, var(--crit) ${okPct}% ${okPct+failPct}%, var(--surface-2) ${okPct+failPct}%)`;
+  document.getElementById("ringPct").textContent = gTot ? Math.round(tested / gTot * 100) + "%" : "0%";
+  document.getElementById("tOk").textContent = gOk;
+  document.getElementById("tFail").textContent = gFail;
+  document.getElementById("tPend").textContent = gTot - tested;
+  const hasFail = gFail > 0;
+  document.getElementById("exportBtn").disabled = !hasFail;
+  document.getElementById("copyBtn").disabled = !hasFail;
+}
+
+function buildMarkdown() {
+  const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const fails = [];
+  DATA.forEach(sec => {
+    const rows = [];
+    sec.items.forEach((it, i) => {
+      const r = state[sec.id + ":" + i];
+      if (r && r.s === "fail") rows.push({ it, note: (r.n || "").trim() });
+    });
+    if (rows.length) fails.push({ sec, rows });
+  });
+  const totalFails = fails.reduce((n, f) => n + f.rows.length, 0);
+
+  let md = `# {{PROJECT_NAME}} — Correções de QA pendentes\n\n`;
+  md += `> **Prompt pronto para o agente.** Corrija cada funcionalidade abaixo marcada como **FALHA**, usando a descrição do erro relatada pelo testador. `;
+  md += `Siga o guia de contribuição do repositório (ex.: \`CLAUDE.md\` / \`AGENTS.md\` / \`CONTRIBUTING.md\`): contextualize antes de mexer, rode lint/build/testes do projeto e registre no changelog. `;
+  md += `Para cada correção, adicione/ajuste um teste que cubra exatamente o cenário que falhou e, ao concluir, atualize o item correspondente no checklist vivo (\`qa/qa-checklist.html\`).\n\n`;
+  md += `**Gerado em:** ${now}  \n**Total de falhas:** ${totalFails}\n\n---\n\n`;
+
+  fails.forEach(({ sec, rows }) => {
+    md += `## ${sec.title}  \`${sec.tag}\`\n\n`;
+    rows.forEach(({ it, note }) => {
+      const head = it.m && it.m !== "FLOW" ? `**[${it.m}]** \`${it.p || "—"}\`` : `**[FLOW]**`;
+      md += `### ${head}${it.sev ? " · ⚠️ crítico" : ""}\n`;
+      md += `- **Cenário testado:** ${it.t}\n`;
+      md += `- **Erro relatado:** ${note || "_(sem descrição — pedir detalhes ao testador)_"}\n\n`;
+    });
+  });
+
+  md += `---\n\n### Ordem sugerida\n1. Resolver primeiro os itens marcados como **⚠️ crítico** (risco direto ao cliente).\n2. Reproduzir cada erro com um teste que falha (RED) antes de corrigir.\n3. Corrigir, ver o teste passar (GREEN) e revalidar o item no checklist vivo.\n`;
+  return md;
+}
+
+function download(md) {
+  const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `{{PROJECT_SLUG}}-qa-erros-${new Date().toISOString().slice(0,10)}.md`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  download(buildMarkdown());
+  toast("Prompt de correção baixado em .md");
+});
+document.getElementById("copyBtn").addEventListener("click", async () => {
+  const md = buildMarkdown();
+  try { await navigator.clipboard.writeText(md); toast("Prompt copiado para a área de transferência"); }
+  catch { download(md); toast("Sem permissão de cópia — baixei o .md"); }
+});
+document.getElementById("toggleDone").addEventListener("click", e => {
+  document.body.classList.toggle("only-pending");
+  e.target.textContent = document.body.classList.contains("only-pending") ? "Mostrar tudo" : "Só pendências";
+});
+document.getElementById("resetAll").addEventListener("click", () => {
+  if (!confirm("Limpar todas as marcações e descrições de erro deste checklist?")) return;
+  state = {}; store.set(state);
+  document.querySelectorAll("li.item").forEach(li => li.classList.remove("pass", "fail"));
+  document.querySelectorAll(".failbox").forEach(b => { b.hidden = true; b.querySelector("textarea").value = ""; });
+  refresh();
+});
+document.getElementById("themeBtn").addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const next = cur === "dark" ? "light" : cur === "light" ? "dark"
+    : (matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark");
+  document.documentElement.setAttribute("data-theme", next);
+});
+refresh();
+</script>
